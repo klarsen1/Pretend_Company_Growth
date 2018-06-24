@@ -35,7 +35,7 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
     customers <- sum(data.frame(rbindlist(cohorts))[,i+1])
     revenue <- customers*price*engagement
     year <- ceiling(i/12)
-    df[[i]] <- data.frame(Month=i, Year=year, Marketing_Spend=marketing, Acquisition=acquisition, Revenue=revenue, CAC=marketing/acquisition, Customers=customers, LTV=sum(s[1:24]*price*engagement), Marginal_CAC=marginal_cac)
+    df[[i]] <- data.frame(Month=i, Year=year, Marketing_Spend=marketing, Acquisition=acquisition, Revenue=revenue, CAC=marketing/acquisition, Customers=customers, LTV=sum(s[1:12]*price*engagement), Marginal_CAC=marginal_cac)
     marketing <- max(marketing_allocation*revenue, initial_marketing)
     if (year >= boost_year){
       marketing <- max((marketing_allocation+marketing_boost)*revenue, initial_marketing)
