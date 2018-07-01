@@ -24,9 +24,9 @@ create_cohort <- function(id, acquisition, p_survival, engagement, price){
 }
 
 ### combine cohorts
-combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=60, marketing_allocation=0.2, survival_rate=0.9,
-                            initial_dropoff=0.8, retention_boost=0, engagement_boost=1, marketing_boost=1, 
-                            initial_marketing=500000/12, base=1000, boost_year=3, fixed_marketing_plan=NULL, maxlim=NULL){
+combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=60, marketing_allocation=NA, survival_rate=NA,
+                            initial_dropoff=NA, retention_boost=0, engagement_boost=1, marketing_boost=1, gm=NA,
+                            initial_marketing=500000/12, base=1000, boost_year=3, fixed_marketing_plan=NULL, maxlim_money=NULL, maxlim_units=NULL){
   cohorts <- list()
   df <- list()
   marketing <- initial_marketing
@@ -42,7 +42,7 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
     cohorts[[i]] <- create_cohort(i, acquisition, s, engagement, price)
     customers <- sum(data.frame(rbindlist(cohorts))[,i+1])
     revenue <- customers*price*engagement
-    df[[i]] <- data.frame(Month=i, Year=year, Marketing_Spend=marketing, Acquisition=acquisition, Revenue=revenue, CAC=marketing/acquisition, Customers=customers, LTV=sum(s[1:12]*price*engagement), Marginal_CAC=marginal_cac)
+    df[[i]] <- data.frame(Month=i, Year=year, Marketing_Spend=marketing, Acquisition=acquisition, Revenue=revenue, CAC=marketing/acquisition, Customers=customers, LTV=sum(s[1:24]*price*engagement*gm), Marginal_CAC=marginal_cac)
     if (is.null(fixed_marketing_plan)){
        marketing <- max(marketing_allocation*revenue, initial_marketing)
     } else{
@@ -73,26 +73,28 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
            Marketing_Percent_of_Revenue=Annual_Marketing_Spend/Annual_Revenue) %>%
     filter(EOY==1) %>%
     ungroup() %>%
-    mutate(YOY_Growth=(Annual_Revenue-lag(Annual_Revenue))/lag(Annual_Revenue))
+    mutate(YOY_Revenue_Growth=(Annual_Revenue-lag(Annual_Revenue))/lag(Annual_Revenue),
+           YOY_Cust_Delta=Customers_EOY-lag(Customers_EOY),
+           Annual_Churn=Annual_Acquisition-YOY_Cust_Delta)
   
   ## create the key charts
   ### Revenue growth
   
   max <- max(max(dd$Annual_Revenue), max(dd$Annual_Marketing_Spend))/1000000
-  if (is.null(maxlim)==FALSE){
-    max <- max(max, maxlim)
+  if (is.null(maxlim_money)==FALSE){
+    max <- max(max, maxlim_money)
   }
 
   p1 <- ggplot(data=dd, aes(x=Year, y=Annual_Revenue/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Revenue ($MM)") + 
     scale_y_continuous(labels = scales::dollar,limits = c(0, max))
 
   ### Marketing spend
-  p2 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=YOY_Growth)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("YoY Growth") + 
+  p2 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=YOY_Revenue_Growth)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("YoY Growth") + 
     scale_y_continuous(labels = scales::percent, limits = c(0, 2))
 
   max <- max(max(dd$Annual_CAC), max(dd$Annual_Marginal_CAC), max(dd$Annual_LTV))
-  if (is.null(maxlim)==FALSE){
-    max <- max(max, maxlim)
+  if (is.null(maxlim_money)==FALSE){
+    max <- max(max, maxlim_money)
   }
   
   ### CAC by year
@@ -101,8 +103,25 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
   
   ### Marginal CAC
   p4 <- ggplot(data=dd, aes(x=Year, y=Annual_Marginal_CAC)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Marginal CAC") + 
-    scale_y_continuous(labels = scales::dollar, limits = c(0, max)) + geom_hline(yintercept=dd$Annual_LTV)
+    scale_y_continuous(labels = scales::dollar, limits = c(0, max))
+
+  max <- max(max(dd$Annual_Acquisition), max(dd$Annual_Churn))
+  if (is.null(maxlim_units)==FALSE){
+    max <- max(max, maxlim_units)
+  }
   
-  return(list(d, dd, plot_grid(p1, p2), plot_grid(p3, p4)))
+  ### Churn
+  p5 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churned Customers") + 
+    scale_y_continuous(labels = scales::comma, limits = c(0, max))
+
+  ### Acquisition
+  p6 <- ggplot(data=dd, aes(x=Year, y=Annual_Acquisition)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Acquired Customers") + 
+    scale_y_continuous(labels = scales::comma, limits = c(0, max))
+  
+  ### Churn divided by acquisition
+  p7 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn/Annual_Acquisition)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churn/Acquisiton") + 
+    geom_hline(yintercept=1, linetype=3)
+  
+  return(list(d, dd, plot_grid(p1, p2), plot_grid(p3, p4), plot_grid(p5, p6), p7))
 }
 
