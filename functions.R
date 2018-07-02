@@ -26,7 +26,8 @@ create_cohort <- function(id, acquisition, p_survival, engagement, price){
 ### combine cohorts
 combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=60, marketing_allocation=NA, survival_rate=NA,
                             initial_dropoff=NA, retention_boost=0, engagement_boost=1, marketing_boost=1, gm=NA,
-                            initial_marketing=500000/12, base=1000, boost_year=3, fixed_marketing_plan=NULL, maxlim_money=NULL, maxlim_units=NULL){
+                            initial_marketing=500000/12, base=1000, boost_year=3, fixed_marketing_plan=NULL, 
+                            maxlim_revenue=NULL, maxlim_units=NULL, maxlim_cac=NULL){
   cohorts <- list()
   df <- list()
   marketing <- initial_marketing
@@ -80,42 +81,44 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
   ## create the key charts
   ### Revenue growth
   
-  max <- max(max(dd$Annual_Revenue), max(dd$Annual_Marketing_Spend))/1000000
-  if (is.null(maxlim_money)==FALSE){
-    max <- max(max, maxlim_money)
+  max <- max(dd$Annual_Revenue/1000000)
+  if (is.null(maxlim_revenue)==FALSE){
+    max <- max(max, maxlim_revenue)
   }
-
+  b <- seq(0, max, by=200)
+  
   p1 <- ggplot(data=dd, aes(x=Year, y=Annual_Revenue/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Revenue ($MM)") + 
-    scale_y_continuous(labels = scales::dollar,limits = c(0, max))
+    scale_y_continuous(labels = scales::dollar,limits = c(0, max), breaks=b)
 
-  ### Marketing spend
+  ### Growth
   p2 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=YOY_Revenue_Growth)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("YoY Growth") + 
-    scale_y_continuous(labels = scales::percent, limits = c(0, 2))
+    scale_y_continuous(labels = scales::percent, limits = c(0, 2), breaks=seq(0, 2, by=.25))
 
-  max <- max(max(dd$Annual_CAC), max(dd$Annual_Marginal_CAC), max(dd$Annual_LTV))
-  if (is.null(maxlim_money)==FALSE){
-    max <- max(max, maxlim_money)
-  }
+  max <- max(max(dd$Annual_CAC), max(dd$Annual_Marginal_CAC))
+  if (is.null(maxlim_cac)==FALSE){
+    max <- max(max, maxlim_cac)
+  } 
+  b <- seq(0, max, by=100)
   
   ### CAC by year
   p3 <- ggplot(data=dd, aes(x=Year, y=Annual_CAC)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("CAC") + 
-    scale_y_continuous(labels = scales::dollar, limits = c(0, max))
+    scale_y_continuous(labels = scales::dollar, limits = c(0, max), breaks=b)
   
   ### Marginal CAC
   p4 <- ggplot(data=dd, aes(x=Year, y=Annual_Marginal_CAC)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Marginal CAC") + 
-    scale_y_continuous(labels = scales::dollar, limits = c(0, max))
+    scale_y_continuous(labels = scales::dollar, limits = c(0, max), breaks=b)
 
-  max <- max(max(dd$Annual_Acquisition), max(dd$Annual_Churn))
+  max <- max(max(dd$Annual_Acquisition/1000000), max(dd$Annual_Churn/1000000))
   if (is.null(maxlim_units)==FALSE){
     max <- max(max, maxlim_units)
   }
   
   ### Churn
-  p5 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churned Customers") + 
+  p5 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churned Customers") + 
     scale_y_continuous(labels = scales::comma, limits = c(0, max))
 
   ### Acquisition
-  p6 <- ggplot(data=dd, aes(x=Year, y=Annual_Acquisition)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Acquired Customers") + 
+  p6 <- ggplot(data=dd, aes(x=Year, y=Annual_Acquisition/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Acquired Customers (MM)") + 
     scale_y_continuous(labels = scales::comma, limits = c(0, max))
   
   ### Churn divided by acquisition
