@@ -4,7 +4,7 @@ library(dplyr)
 library(grid)
 library(cowplot)
 
-### function to create a survival curve
+### Helper function to create a survival curve
 get_survival_curve <- function(p0, p, length){
   r <- rep(1, length)
   r[2] <- p0
@@ -14,7 +14,7 @@ get_survival_curve <- function(p0, p, length){
   return(r)
 }
 
-### function to create cohorts
+### Helper Function to create cohorts
 create_cohort <- function(id, acquisition, p_survival, engagement, price){ 
   zeros <- rep(0, id-1)
   window <- length(p_survival)
@@ -23,11 +23,33 @@ create_cohort <- function(id, acquisition, p_survival, engagement, price){
   return(row)
 }
 
-### combine cohorts
-combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=60, marketing_allocation=NA, survival_rate=NA,
-                            initial_dropoff=NA, retention_boost=0, engagement_boost=1, marketing_boost=1, gm=NA,
-                            initial_marketing=500000/12, base=1000, boost_year=3, fixed_marketing_plan=NULL, 
-                            maxlim_revenue=NULL, maxlim_units=NULL, maxlim_cac=NULL){
+### Function to combine cohorts and compute metrics
+
+# marketing_elascity: e.g., 0.3 means that a 10% increase in marketing drives a 3% increase in acquisition.
+# engagement: the average number of monthly transactions made by active customers
+# price: the average price associated with a transaction
+# marketing_allocation: e.g., 0.2 means that 20% of last month's revenue will be allocated to this month's marketing spend
+# survival rate: 1 - churn rate after month 1
+# initial_dropoff: churn rate for the first month
+# retention_boost: factor to boost retention after a given year (specified y boost_year). 
+#                  This is done in an additive way -- e.g., if you put 0.02 and the survival rate is 0.9, you get a survival rate of 0.92
+# engagement_boost: factor to boost engagement after a given year (specified y boost_year). This is a multiplier
+# marketing_boost: factor to boost engagement after a given year (specified y boost_year). This is a multiplier
+# boost_year: see above.
+# initial_marketing: marketing spend for the first month
+# base: base for the acquisition equation: base * spend^elasticity
+# fixed_marketing_plan: a vector of monthly marketing spend values
+# n: number of months
+# maxlim_revenue: y-axis limit for revenue charts
+# maxlim_units: y-axis limit for customer charts
+# maxlim_cac: y-axis limit for CAC charts
+
+
+run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n=60, 
+                        marketing_allocation=NA, survival_rate=NA,
+                        initial_dropoff=NA, retention_boost=0, engagement_boost=1, marketing_boost=1, gm=NA,
+                        initial_marketing=500000/12, base=1000, boost_year=3, fixed_marketing_plan=NULL, 
+                        maxlim_revenue=NULL, maxlim_units=NULL, maxlim_cac=NULL){
   cohorts <- list()
   df <- list()
   marketing <- initial_marketing
@@ -36,9 +58,9 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
     marginal_cac <- 1 / (base*( (marketing+2)**marketing_elasticity - (marketing+1)**marketing_elasticity))
     year <- ceiling(i/12)
     if (year >= boost_year){
-       s <- get_survival_curve(initial_dropoff, survival_rate+retention_boost, n)
+       s <- get_survival_curve(1-initial_dropoff, survival_rate+retention_boost, n)
     } else{
-       s <- get_survival_curve(initial_dropoff, survival_rate, n)
+       s <- get_survival_curve(1-initial_dropoff, survival_rate, n)
     }
     cohorts[[i]] <- create_cohort(i, acquisition, s, engagement, price)
     customers <- sum(data.frame(rbindlist(cohorts))[,i+1])
