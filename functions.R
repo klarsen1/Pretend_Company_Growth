@@ -64,7 +64,7 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
   dd <- d %>% 
     group_by(Year) %>% 
     mutate(EOY=as.numeric(row_number()==n()),
-           Customers_EOY=max(Customers*EOY), 
+           Customers_EOY=Customers, 
            Annual_Revenue=sum(Revenue), 
            Annual_Acquisition=sum(Acquisition), 
            Annual_Marketing_Spend=sum(Marketing_Spend),
@@ -73,6 +73,7 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
            Annual_Marginal_CAC=sum(Marginal_CAC*Marketing_Spend)/sum(Marketing_Spend), 
            Marketing_Percent_of_Revenue=Annual_Marketing_Spend/Annual_Revenue) %>%
     filter(EOY==1) %>%
+    select(-Customers) %>%
     ungroup() %>%
     mutate(YOY_Revenue_Growth=(Annual_Revenue-lag(Annual_Revenue))/lag(Annual_Revenue),
            YOY_Cust_Delta=Customers_EOY-lag(Customers_EOY),
@@ -92,7 +93,7 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
 
   ### Growth
   p2 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=YOY_Revenue_Growth)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("YoY Growth") + 
-    scale_y_continuous(labels = scales::percent, limits = c(0, 2), breaks=seq(0, 2, by=.25))
+    scale_y_continuous(labels = scales::percent, limits = c(0, 2), breaks=seq(0, 2, by=.20))
 
   max <- max(max(dd$Annual_CAC), max(dd$Annual_Marginal_CAC))
   if (is.null(maxlim_cac)==FALSE){
@@ -122,9 +123,14 @@ combine_cohorts <- function(marketing_elasticity=0.3, engagement=1, price=NA, n=
     scale_y_continuous(labels = scales::comma, limits = c(0, max))
   
   ### Churn divided by acquisition
-  p7 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn/Annual_Acquisition)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churn/Acquisiton") + 
+  p7 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn/Annual_Acquisition)) +
+    geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churn/Acquisiton") + 
+    geom_hline(yintercept=1, linetype=3) + scale_y_continuous(limits = c(0, 1), breaks=seq(0, 2, by=.20))
+
+  ### Churn divided by acquisition
+  p8 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_LTV)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Net LTV") + 
     geom_hline(yintercept=1, linetype=3)
   
-  return(list(d, dd, plot_grid(p1, p2), plot_grid(p3, p4), plot_grid(p5, p6), p7))
+  return(list(d, dd, plot_grid(p1, p2), plot_grid(p3, p4), plot_grid(p5, p6), p7, p8))
 }
 
