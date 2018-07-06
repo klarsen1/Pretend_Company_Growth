@@ -71,7 +71,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     }
     
     ## Create a cohort for the given level of acquisition and retention
-    cohorts[[i]] <- create_cohort(i, acquisition, s, engagement, price)
+    cohorts[[i]] <- create_cohort(i, acquisition, s)
     customers <- sum(data.frame(rbindlist(cohorts))[,i+1])
     revenue <- customers*price*engagement
     df[[i]] <- data.frame(Month=i, Year=year, Marketing_Spend=marketing, Acquisition=acquisition, Revenue=revenue, CAC=marketing/acquisition, Customers=customers, LTV=sum(s[1:24]*price*engagement*gm), Marginal_CAC=marginal_cac)
@@ -118,7 +118,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   ## Create some plots fo export
 
   # Revenue
-  max <- max(dd$Annual_Revenue/1000000)
+  max <- max(dd$Annual_Revenue)/1000000
   if (is.null(maxlim_revenue)==FALSE){
     max <- max(max, maxlim_revenue)
   }
@@ -128,8 +128,9 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     scale_y_continuous(labels = scales::dollar,limits = c(0, max), breaks=b)
 
   # Growth
+  max <- max(2, max(filter(dd, Year>1)$YOY_Revenue_Growth))
   p2 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=YOY_Revenue_Growth)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("YoY Growth") + 
-    scale_y_continuous(labels = scales::percent, limits = c(0, 2), breaks=seq(0, 2, by=.20))
+    scale_y_continuous(labels = scales::percent, limits = c(0, max), breaks=seq(0, max, by=.20))
 
   max <- max(max(dd$Annual_CAC), max(dd$Annual_Marginal_CAC))
   if (is.null(maxlim_cac)==FALSE){
@@ -164,7 +165,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     geom_hline(yintercept=1, linetype=3) + scale_y_continuous(limits = c(0, 1), breaks=seq(0, 2, by=.20))
 
   # Net LTV
-  p8 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_LTV)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Net LTV") + 
+  p8 <- ggplot(data=dd, aes(x=Year, y=Annual_LTV)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Net LTV") + 
     geom_hline(yintercept=1, linetype=3)
   
   ### Return the dataframes and the plots
