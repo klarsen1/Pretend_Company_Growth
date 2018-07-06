@@ -12,7 +12,7 @@ get_survival_curve <- function(p0, p, length){
   r <- rep(1, length)
   r[2] <- p0
   for (i in 3:length){
-    r[i] <- p0 * p^(i-1)
+    r[i] <- p0 * p^(i-2)
   }
   return(r)
 }
@@ -20,9 +20,7 @@ get_survival_curve <- function(p0, p, length){
 ### Helper Function to create cohorts
 # acquisition: size of the cohort
 # p_survival: monthly survival rate
-# engagement: the average number of monthly transactions made by active customers
-# price: the average price associated with a transaction
-create_cohort <- function(id, acquisition, p_survival, engagement, price){ 
+create_cohort <- function(id, acquisition, p_survival){ 
   zeros <- rep(0, id-1)
   window <- length(p_survival)
   row <- data.frame(id, t(c(zeros, t(p_survival[1:(window-(id-1))])*acquisition)))
@@ -32,8 +30,8 @@ create_cohort <- function(id, acquisition, p_survival, engagement, price){
 
 ### Function to combine cohorts and compute metrics
 # marketing_elascity: e.g., 0.3 means that a 10% increase in marketing drives a 3% increase in acquisition.
-# engagement: (see the create_cohort function)
-# price: (see the create_cohort function)
+# engagement: the average number of monthly transactions made by active customers
+# price: the average price associated with a transaction
 # marketing_allocation: e.g., 0.2 means that 20% of last month's revenue will be allocated to this month's marketing spend
 # survival rate: 1 - churn rate after month 1
 # initial_dropoff: churn rate for the first month
