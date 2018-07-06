@@ -58,6 +58,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   df <- list()
   marketing <- initial_marketing
   for (i in 1:n){
+    ## Calculate acquisition and retention
     acquisition <- base * (marketing+1)**marketing_elasticity
     marginal_cac <- 1 / (base*( (marketing+2)**marketing_elasticity - (marketing+1)**marketing_elasticity))
     year <- ceiling(i/12)
@@ -70,10 +71,14 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     } else{ 
        s <- get_survival_curve(1-initial_dropoff, survival_rate, n)
     }
+    
+    ## Create a cohort for the given level of acquisition and retention
     cohorts[[i]] <- create_cohort(i, acquisition, s, engagement, price)
     customers <- sum(data.frame(rbindlist(cohorts))[,i+1])
     revenue <- customers*price*engagement
     df[[i]] <- data.frame(Month=i, Year=year, Marketing_Spend=marketing, Acquisition=acquisition, Revenue=revenue, CAC=marketing/acquisition, Customers=customers, LTV=sum(s[1:24]*price*engagement*gm), Marginal_CAC=marginal_cac)
+    
+    ## Calculate marketing spend for the next month
     if (is.null(fixed_marketing_plan)){
        marketing <- max(marketing_allocation*revenue, initial_marketing)
     } else{
@@ -90,10 +95,10 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     }
   }
   
-  ### Create the monthly dataframe
+  ## Create the monthly dataframe by collapsing the rows
   d <- data.frame(rbindlist(df))
   
-  ### Create the annual dataframe
+  ## Create the annual dataframe
   dd <- d %>% 
     group_by(Year) %>% 
     mutate(EOY=as.numeric(row_number()==n()),
@@ -112,9 +117,9 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
            YOY_Cust_Delta=Customers_EOY-lag(Customers_EOY),
            Annual_Churn=Annual_Acquisition-YOY_Cust_Delta)
   
-  ### Create some plots fo export
+  ## Create some plots fo export
 
-  # Revenue growth
+  # Revenue
   max <- max(dd$Annual_Revenue/1000000)
   if (is.null(maxlim_revenue)==FALSE){
     max <- max(max, maxlim_revenue)
@@ -124,6 +129,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   p1 <- ggplot(data=dd, aes(x=Year, y=Annual_Revenue/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Revenue ($MM)") + 
     scale_y_continuous(labels = scales::dollar,limits = c(0, max), breaks=b)
 
+  # Growth
   p2 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=YOY_Revenue_Growth)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("YoY Growth") + 
     scale_y_continuous(labels = scales::percent, limits = c(0, 2), breaks=seq(0, 2, by=.20))
 
