@@ -1,4 +1,4 @@
-setwd("/Users/thirdlovechangethisname/Documents/Code/Pretend_Company_Growth/")
+setwd("/Users/thirdlovechangethisname/Documents/Code/Pretend_Company_Growth/charts")
 
 s <- function(x) {
   1 / (1 + exp(-x*1.5))
