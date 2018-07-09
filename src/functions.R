@@ -168,8 +168,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   p8 <- ggplot(data=dd, aes(x=Year, y=Annual_LTV)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Net LTV") + 
     geom_hline(yintercept=1, linetype=3)
   
-  ### Return the dataframes and the plots
-  
+  ### Return all the dataframes and the plots
   return(list(d, dd, plot_grid(p1, p2), plot_grid(p3, p4), plot_grid(p5, p6), p7, p8))
 }
 
