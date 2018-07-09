@@ -1,7 +1,7 @@
 
-setwd("/Users/thirdlovechangethisname/Documents/Code/Pretend_Company_Growth/")
+setwd("/Users/thirdlovechangethisname/Documents/Code/Pretend_Company_Growth/charts")
 
-source("functions.R")
+source("/Users/thirdlovechangethisname/Documents/Code/Pretend_Company_Growth/src/functions.R")
 
 ### Baseline scenario: Create a company
 growth1 <- run_scenario(marketing_elasticity=0.30, engagement=1, price=60, n=60, initial_marketing=500000/12,
