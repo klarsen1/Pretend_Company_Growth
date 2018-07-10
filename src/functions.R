@@ -54,12 +54,32 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
                         maxlim_revenue=NULL, maxlim_units=NULL, maxlim_cac=NULL){
   cohorts <- list()
   df <- list()
+  
+  ## Initialize marketing
   marketing <- initial_marketing
+  
+  ## Loop through the months
   for (i in 1:n){
+    
+    ## Get the year
+    year <- ceiling(i/12)
+
+    ## Deal with the fixed marketing case
+    if (is.null(fixed_marketing_plan)==FALSE){
+      if (length(fixed_marketing_plan) != n){
+        print("Error: length of marketing plan is different than n")
+      }
+      marketing <- fixed_marketing_plan[i]
+      if (is.null(boost_year)==FALSE){
+        if (year >= boost_year){
+          marketing <- marketing*marketing_boost  
+        }
+      }
+    }
+
     ## Calculate acquisition and retention
     acquisition <- base * (marketing+1)**marketing_elasticity
     marginal_cac <- 1 / (base*( (marketing+2)**marketing_elasticity - (marketing+1)**marketing_elasticity))
-    year <- ceiling(i/12)
     if (is.null(boost_year)==FALSE){
        if (year >= boost_year){
           s <- get_survival_curve(1-initial_dropoff, survival_rate+retention_boost, n)
@@ -76,21 +96,15 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     revenue <- customers*price*engagement
     df[[i]] <- data.frame(Month=i, Year=year, Marketing_Spend=marketing, Acquisition=acquisition, Revenue=revenue, CAC=marketing/acquisition, Customers=customers, LTV=sum(s[1:24]*price*engagement*gm), Marginal_CAC=marginal_cac)
     
-    ## Calculate marketing spend for the next month
+    ## When the fixed marketing plan is not provided, calculate marketing spend for the next month
     if (is.null(fixed_marketing_plan)){
        marketing <- max(marketing_allocation*revenue, initial_marketing)
-    } else{
-      if (length(fixed_marketing_plan) != n){
-        print("Error: length of marketing plan is different than n")
-      }
-      marketing <- fixed_marketing_plan[i]
-    }
-    if (is.null(boost_year)==FALSE){
-      if (year >= boost_year){
-        marketing <- marketing*marketing_boost  
-      }
-
-    }
+       if (is.null(boost_year)==FALSE){
+          if (year >= boost_year){
+             marketing <- marketing*marketing_boost  
+          }
+        }
+     }
   }
   
   ## Create the monthly dataframe by collapsing the rows
@@ -115,28 +129,28 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
            YOY_Cust_Delta=Customers_EOY-lag(Customers_EOY),
            Annual_Churn=Annual_Acquisition-YOY_Cust_Delta)
   
-  ## Create some plots fo export
+  ## Create some plots for export
 
   # Revenue
-  max <- max(dd$Annual_Revenue)/1000000
+  max <- max(dd$Annual_Revenue)/1000000 # get the max for formatting the Y axis
   if (is.null(maxlim_revenue)==FALSE){
     max <- max(max, maxlim_revenue)
   }
-  b <- seq(0, max, by=200)
+  b <- seq(0, max, by=200) # set the breaks
   
   p1 <- ggplot(data=dd, aes(x=Year, y=Annual_Revenue/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Revenue ($MM)") + 
     scale_y_continuous(labels = scales::dollar,limits = c(0, max), breaks=b)
 
   # Growth
-  max <- max(2, max(filter(dd, Year>1)$YOY_Revenue_Growth))
+  max <- max(2, max(filter(dd, Year>1)$YOY_Revenue_Growth)) # get the max for formatting the Y axis
   p2 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=YOY_Revenue_Growth)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("YoY Growth") + 
     scale_y_continuous(labels = scales::percent, limits = c(0, max), breaks=seq(0, max, by=.20))
 
-  max <- max(max(dd$Annual_CAC), max(dd$Annual_Marginal_CAC))
+  max <- max(max(dd$Annual_CAC), max(dd$Annual_Marginal_CAC)) # get the max for formatting the Y axis
   if (is.null(maxlim_cac)==FALSE){
     max <- max(max, maxlim_cac)
   } 
-  b <- seq(0, max, by=100)
+  b <- seq(0, max, by=100) # set the breaks
   
   # CAC
   p3 <- ggplot(data=dd, aes(x=Year, y=Annual_CAC)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("CAC") + 
@@ -146,7 +160,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   p4 <- ggplot(data=dd, aes(x=Year, y=Annual_Marginal_CAC)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Marginal CAC") + 
     scale_y_continuous(labels = scales::dollar, limits = c(0, max), breaks=b)
 
-  max <- max(max(dd$Annual_Acquisition/1000000), max(dd$Annual_Churn/1000000))
+  max <- max(max(dd$Annual_Acquisition/1000000), max(dd$Annual_Churn/1000000)) # get the max for formatting the Y axis
   if (is.null(maxlim_units)==FALSE){
     max <- max(max, maxlim_units)
   }
