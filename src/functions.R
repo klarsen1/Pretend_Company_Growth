@@ -166,7 +166,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   }
   
   # Churn
-  p5 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churned Customers") + 
+  p5 <- ggplot(data=filter(dd, Year>1), aes(x=Year, y=Annual_Churn/1000000)) + geom_bar(stat="identity", position = "identity") + xlab("Year") + ylab("Churned Customers (MM)") + 
     scale_y_continuous(labels = scales::comma, limits = c(0, max))
 
   # Acquisition
@@ -183,6 +183,6 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     geom_hline(yintercept=1, linetype=3)
   
   ### Return all the dataframes and the plots
-  return(list(d, dd, plot_grid(p1, p2), plot_grid(p3, p4), plot_grid(p5, p6), p7, p8))
+  return(list(d, dd, plot_grid(p1, p2), plot_grid(p3, p4), p5, p7, p8))
 }
 
