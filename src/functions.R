@@ -3,6 +3,7 @@ library(ggplot2)
 library(dplyr)
 library(grid)
 library(cowplot)
+library(tidyr)
 
 ### Helper function to create a survival curve
 # p0: the month 1 survival rate
@@ -51,7 +52,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
                         marketing_allocation=NA, survival_rate=NA,
                         initial_dropoff=NA, retention_boost=0, engagement_boost=1, marketing_boost=1, gm=NA,
                         initial_marketing=500000/12, base=1000, boost_year=NULL, fixed_marketing_plan=NULL, 
-                        maxlim_revenue=NULL, maxlim_units=NULL, maxlim_cac=NULL){
+                        maxlim_revenue=NULL, maxlim_units=NULL, maxlim_cac=NULL, price_boost=1){
   cohorts <- list()
   df <- list()
   
@@ -74,6 +75,14 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
         if (year >= boost_year){
           marketing <- marketing*marketing_boost  
         }
+      }
+    }
+    
+    ## Engagement boost
+    if (is.null(boost_year)==FALSE){
+      if (year >= boost_year){
+        engagement <- engagement_boost * engagement_boost
+        price <- price * price_boost
       }
     }
 
