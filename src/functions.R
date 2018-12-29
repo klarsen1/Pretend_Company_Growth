@@ -81,7 +81,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
     ## Engagement boost
     if (is.null(boost_year)==FALSE){
       if (year >= boost_year){
-        engagement <- engagement_boost * engagement_boost
+        engagement <- engagement * engagement_boost
         price <- price * price_boost
       }
     }
