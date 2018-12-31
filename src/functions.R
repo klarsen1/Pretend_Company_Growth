@@ -102,7 +102,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
        marketing <- max(marketing_allocation*revenue, initial_marketing)
        if (is.null(boost_year)==FALSE){
           if (year >= boost_year){
-             print(paste0("Revised marketing = ", marketing_boost*marketing_allocation))
+             #print(paste0("Revised marketing = ", marketing_boost*marketing_allocation))
              marketing <- marketing*marketing_boost  
           }
         }
@@ -115,7 +115,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   ## Engagement boost
   if (is.null(boost_year)==FALSE){
     d$Revenue <- ifelse(d$Year>=boost_year, d$Revenue*price_boost*engagement_boost, d$Revenue)
-    print(paste0("Revised engagement = ", price_boost*engagement_boost*engagement))
+    #print(paste0("Revised engagement = ", price_boost*engagement_boost*engagement))
   }
   
   ## Create the annual dataframe
