@@ -18,7 +18,7 @@ ggsave(baseline[[6]], file="baseline_churn_acq_ratio.png", device = "png", dpi=7
 
 Results <- list()
 s <- 1
-for (a in seq(.20, .40, by=.1)){
+for (a in seq(.15, .35, by=.1)){
   for (pe in seq(2, 3.5, by=0.5)){
      for (me in seq(0.2, 0.4, by=0.1)){
         for (i in seq(a-.1, a, by=0.01)){
@@ -68,7 +68,26 @@ graph <- ggplot(Scenarios, aes(x=Price_Elasticity, y=Discount)) +
   facet_wrap(Scenario ~ ., scales="fixed") +
   xlab("Price Elasticity") +
   ylab("% Incentives") +
-  scale_y_continuous(limits = c(0, 0.1), breaks=seq(0, .10, by=.05), labels = scales::percent)
+  scale_y_continuous(limits = c(0, 0.1), breaks=seq(0, .10, by=.05), labels = scales::percent) + 
+  scale_x_continuous(breaks=seq(1.5, 3, by=.5))
 graph  
+
+
+d <- data.frame(matrix(nrow=5, ncol=2))
+
+d[1,1] <- 100
+d[1,2] <- 4
+
+d[2,1] <- 90
+d[2,2] <- 6
+
+d[3,1] <- 80
+d[3,2] <- 12
+
+d[4,1] <- 70
+d[4,2] <- 18
+
+d[5,1] <- 60
+d[5,2] <- 29
 
 
