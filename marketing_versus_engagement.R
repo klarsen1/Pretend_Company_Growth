@@ -18,9 +18,9 @@ ggsave(baseline[[6]], file="baseline_churn_acq_ratio.png", device = "png", dpi=7
 
 Results <- list()
 s <- 1
-for (a in seq(.15, .35, by=.1)){
+for (a in seq(.15, .25, by=.05)){
   for (pe in seq(2, 3.5, by=0.5)){
-     for (me in seq(0.2, 0.4, by=0.1)){
+     for (me in seq(0.25, 0.35, by=0.05)){
         for (i in seq(a-.1, a, by=0.01)){
            print(paste0("Scenario: ", s))
            print(paste0("Marketing Elasticity: ", me))
@@ -61,15 +61,16 @@ Scenarios <- data.frame(rbindlist(Results)) %>%
   arrange(Current_Allocation, Marketing_Elasticity, Price_Elasticity, -Year5_Revenue) %>% 
   group_by(Current_Allocation, Marketing_Elasticity, Price_Elasticity) %>%
   filter(as.numeric(row_number())==1) %>%
-  mutate(Scenario=paste0("MA: ", round(100*Current_Allocation,2), "% ME: ", round(100*Marketing_Elasticity,2), "%"))
+  mutate(Scenario=paste0("MA: ", round(100*Current_Allocation,2), "% -- ME: ", round(100*Marketing_Elasticity,2), "%"), 
+         Incentive_Allocation=Discount/.1)
          
-graph <- ggplot(Scenarios, aes(x=Price_Elasticity, y=Discount)) +
+graph <- ggplot(Scenarios, aes(x=Price_Elasticity, y=Incentive_Allocation)) +
   geom_bar(stat="identity") +
   facet_wrap(Scenario ~ ., scales="fixed") +
   xlab("Price Elasticity") +
-  ylab("% Incentives") +
-  scale_y_continuous(limits = c(0, 0.1), breaks=seq(0, .10, by=.05), labels = scales::percent) + 
-  scale_x_continuous(breaks=seq(1.5, 3, by=.5))
+  ylab("% Investment Allocated to Incentives") +
+  scale_y_continuous(breaks=seq(0, 1, by=.25), labels = scales::percent) + 
+  scale_x_continuous(breaks=seq(2, 3.5, by=0.5))
 graph  
 
 
