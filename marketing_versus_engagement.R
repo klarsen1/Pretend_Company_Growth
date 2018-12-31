@@ -18,10 +18,10 @@ ggsave(baseline[[6]], file="baseline_churn_acq_ratio.png", device = "png", dpi=7
 
 Results <- list()
 s <- 1
-for (a in seq(.20, .50, by=.1)){
-  for (pe in seq(1, 2.5, by=0.5)){
-     for (me in seq(0.2, 0.4, by=0.05)){
-        for (i in seq(a-.1, a, by=0.02)){
+for (a in seq(.20, .40, by=.1)){
+  for (pe in seq(2, 3.5, by=0.5)){
+     for (me in seq(0.2, 0.4, by=0.1)){
+        for (i in seq(a-.1, a, by=0.01)){
            print(paste0("Scenario: ", s))
            print(paste0("Marketing Elasticity: ", me))
            print(paste0("Price Elasticity: ", pe))
@@ -29,7 +29,7 @@ for (a in seq(.20, .50, by=.1)){
            marketing_percent <- i
            discount_percent <- a - i
            price_scalar <-  1 - discount_percent
-           engagement_scalar <- exp(pe*discount_percent)
+           engagement_scalar <- (1-discount_percent)^(-pe)
            marketing_scalar <- marketing_percent/a
            print(paste0("Marketing %: ", marketing_percent))
            print(paste0("Discount %: ", discount_percent))
@@ -58,18 +58,17 @@ for (a in seq(.20, .50, by=.1)){
 }
 
 Scenarios <- data.frame(rbindlist(Results)) %>% 
-  arrange(Marketing_Elasticity, Price_Elasticity, -Year5_Revenue) %>% 
+  arrange(Current_Allocation, Marketing_Elasticity, Price_Elasticity, -Year5_Revenue) %>% 
   group_by(Current_Allocation, Marketing_Elasticity, Price_Elasticity) %>%
   filter(as.numeric(row_number())==1) %>%
-  mutate(Relative_Elasticity=Price_Elasticity/Marketing_Elasticity, 
-         Marketing_Allocation=paste0(round(100*Current_Allocation,2), "%"))
-  
-
-graph <- ggplot(Scenarios, aes(x=Relative_Elasticity, y=Discount)) +
-  geom_point(size = 2, color = 'white') +
-  geom_smooth(method='loess', se=FALSE) + 
-  facet_grid(Current_Allocation ~ ., scales="fixed") + xlab("Price Elasticity / Marketing Elasticity") +
-  ylab("% Incentives") + scale_y_continuous(limits = c(-0.04, 0.14), breaks=seq(0, .15, by=.05))
+  mutate(Scenario=paste0("MA: ", round(100*Current_Allocation,2), "% ME: ", round(100*Marketing_Elasticity,2), "%"))
+         
+graph <- ggplot(Scenarios, aes(x=Price_Elasticity, y=Discount)) +
+  geom_bar(stat="identity") +
+  facet_wrap(Scenario ~ ., scales="fixed") +
+  xlab("Price Elasticity") +
+  ylab("% Incentives") +
+  scale_y_continuous(limits = c(0, 0.1), breaks=seq(0, .10, by=.05), labels = scales::percent)
 graph  
 
 
