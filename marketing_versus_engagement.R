@@ -20,7 +20,7 @@ Results <- list()
 s <- 1
 for (a in seq(.10, .20, by=.05)){
   for (pe in seq(2.5, 4, by=0.5)){
-     for (me in seq(0.2, 0.4, by=0.1)){
+     for (me in seq(0.20, 0.30, by=0.05)){
         for (i in seq(a-.09, a, by=0.01)){
            print(paste0("Scenario: ", s))
            print(paste0("Marketing Elasticity: ", me))
@@ -67,8 +67,8 @@ Scenarios <- data.frame(rbindlist(Results)) %>%
 graph <- ggplot(Scenarios, aes(x=Price_Elasticity, y=Discount)) +
   geom_bar(stat="identity") +
   facet_wrap(Scenario ~ ., scales="fixed") +
-  xlab("Price Elasticity") +
-  ylab("% Investment Allocated to Incentives") +
+  xlab("Incentive Elasticity") +
+  ylab("% Marketing Reallocated to Incentives") +
   scale_y_continuous(limits=c(0,.1), breaks=seq(0, .1, by=.025), labels = scales::percent) + 
   scale_x_continuous(breaks=seq(2.5, 4, by=0.5))
 graph  
