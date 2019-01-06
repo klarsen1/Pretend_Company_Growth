@@ -16,8 +16,8 @@ ggsave(baseline[[6]], file="baseline_churn_acq_ratio.png", device = "png", dpi=7
 
 ### Optimize
 
-Opt_Year <- 5
-Strategy_Change_Year <- 4
+Opt_Year <- 4 # optimization year
+Strategy_Change_Year <- 4 # year the optimization starts
 Results <- list()
 s <- 1
 for (a in seq(.20, .20, by=.05)){
@@ -63,39 +63,21 @@ Scenarios <- data.frame(rbindlist(Results)) %>%
   arrange(Current_Allocation, Marketing_Elasticity, Price_Elasticity, -Year5_Revenue) %>% 
   group_by(Current_Allocation, Marketing_Elasticity, Price_Elasticity) %>%
   filter(as.numeric(row_number())==1) %>%
+  ungroup() %>%
   mutate(Scenario=paste0("MA: ", round(100*Current_Allocation,2), "% -- ME: ", round(100*Marketing_Elasticity,2), "%"), 
          ME=paste0("ME: ", Marketing_Elasticity),
-         Incentive_Allocation=Discount/.1)
+         Incentive_Allocation=Discount/.1, 
+         Price_Elasticity=Price_Elasticity*-1)
          
-graph1 <- ggplot(Scenarios, aes(x=Price_Elasticity, y=Discount)) +
+graph <- ggplot(Scenarios, aes(x=Price_Elasticity, y=Discount)) +
   geom_bar(stat="identity") +
   facet_wrap(ME ~ ., scales="fixed") +
   xlab("Incentive Elasticity") +
   ylab("% Revenue Allocated to Incentives") +
   scale_y_continuous(limits=c(0,0.20), breaks=seq(0, .20, by=.05), labels = scales::percent) + 
-  scale_x_continuous(breaks=seq(2, 3.5, by=0.5))
+  scale_x_continuous(breaks=seq(-3.5, -2, by=0.5))
 
-graph1  
-ggsave(graph1, file="incentives_versus_marketing_4_5years.png", device = "png", dpi=72, width=9, height=6)
-#ggsave(graph1, file="incentives_versus_marketing_3_5years.png", device = "png", dpi=72, width=9, height=6)
-#ggsave(graph1, file="incentives_versus_marketing_2_5years.png", device = "png", dpi=72, width=9, height=6)
-#ggsave(graph1, file="incentives_versus_marketing_4_4years.png", device = "png", dpi=72, width=9, height=6)
-
-d <- data.frame(matrix(nrow=5, ncol=2))
-
-d[1,1] <- 100
-d[1,2] <- 4
-
-d[2,1] <- 90
-d[2,2] <- 6
-
-d[3,1] <- 80
-d[3,2] <- 12
-
-d[4,1] <- 70
-d[4,2] <- 18
-
-d[5,1] <- 60
-d[5,2] <- 29
-
+graph  
+ggsave(graph, file="incentives_versus_marketing_4_5years.png", device = "png", dpi=72, width=9, height=6)
+#ggsave(graph, file="incentives_versus_marketing_4_4years.png", device = "png", dpi=72, width=9, height=6)
 
