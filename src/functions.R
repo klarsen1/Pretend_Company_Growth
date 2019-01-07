@@ -112,7 +112,7 @@ run_scenario <- function(marketing_elasticity=NULL, engagement=NULL, price=NA, n
   ## Create the monthly dataframe by collapsing the rows
   d <- data.frame(rbindlist(df))
   
-  ## Engagement boost
+  ## Apply engagement boost
   if (is.null(boost_year)==FALSE){
     d$Revenue <- ifelse(d$Year>=boost_year, d$Revenue*price_boost*engagement_boost, d$Revenue)
     #print(paste0("Revised engagement = ", price_boost*engagement_boost*engagement))

@@ -20,10 +20,10 @@ Opt_Year <- 4 # optimization year
 Strategy_Change_Year <- 4 # year the optimization starts
 Results <- list()
 s <- 1
-for (a in seq(.20, .20, by=.05)){
-  for (pe in seq(2, 3.5, by=0.5)){
-     for (me in seq(0.20, 0.35, by=0.05)){
-        for (i in seq(0.01, a, by=0.01)){
+for (a in seq(.20, .20, by=.05)){ # marketing allocation
+  for (pe in seq(2, 3.5, by=0.5)){ # incentive elasticity
+     for (me in seq(0.20, 0.35, by=0.05)){ # marketing elasticity
+        for (i in seq(0.01, a, by=0.01)){ # find the optimal with a simple search
            print(paste0("Scenario: ", s))
            print(paste0("Marketing Elasticity: ", me))
            print(paste0("Price Elasticity: ", pe))
